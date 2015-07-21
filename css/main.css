@@ -56,15 +56,52 @@ textarea {
    Author's custom styles
    ========================================================================== */
 
+body {
+  font-family: 'PT Sans';
+}
 
+header h1 {
+  font-family: 'Great Vibes';
+  font-size: 3rem;
+  font-weight: 400;
+  margin: 0;
+  color: #552300;
+}
 
+header p {
+  text-transform: uppercase;
+  font-family: 'PT Sans';
+  margin: 0;
+}
 
+.main-container {
+  padding: 1rem;
+}
 
+p.tag-line {
+  margin-top: 3rem;
+  line-height: 1.4;
+}
 
+.quote-open,
+.quote-close {
+  vertical-align: middle;
+  position: relative;
+  display: inline-block;
+  height: 1rem;
+  line-height: 1rem;
+  color: #ccc;
+}
 
+.quote-open {
+  top: 2.8rem;
+  font-size: 12rem;
+}
 
-
-
+.quote-close {
+  top: 1.6rem;
+  font-size: 6rem;
+}
 
 
 
