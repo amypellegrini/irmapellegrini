@@ -78,6 +78,14 @@ header p {
   padding: 1rem;
 }
 
+.background {
+  right: 0;
+  opacity: 0.5;
+  position: absolute;
+  top: -88px;
+  z-index: 0;
+}
+
 p.tag-line {
   margin-top: 3rem;
   line-height: 1.4;
