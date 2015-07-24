@@ -110,6 +110,15 @@ p.tag-line {
   font-size: 6rem;
 }
 
+.contact-link,
+.contact-link:hover {
+  display: inline-block;
+  cursor: pointer;
+  margin: 1em 0;
+  text-transform: uppercase;
+  color: #333;
+}
+
 .contact-info {
   background-color: rgba(0,0,0,0.7);
   display: inline-block;
