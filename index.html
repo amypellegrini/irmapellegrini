@@ -19,7 +19,7 @@
         <!--[if lt IE 8]>
             <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
-    <div class="background">
+    <div class="background hidden">
       <img src="img/leaves.png" alt="Leaves background">
     </div>
     <div class="main-container">
@@ -31,6 +31,33 @@
         <div class="tag-line-container">
           <p class="tag-line"><span class="quote-open">“</span>I feel like a leaf in the wind, attached to nature<span class="quote-close">”</span></p>
           <img src="img/leaf-155x125.png" alt="Leaf">
+        </div>
+        <div class="contact-info">
+          <h4>Contact</h4>
+          <p>Mobile: (+44) 7777 625504</p>
+          <p>Or <strong>send me an email:</strong></p>
+          <div class="form-container">
+            <form action="//formspree.io/irmapellegrini@gmail.com" method="POST">
+              <input type="hidden" name="_next" value="//amypellegrini.github.io/irmapellegrini/" />
+              <div class="form-field clearfix">
+                <label>Name<em>*</em></label>
+                <input type="text" required name="name" />
+              </div>
+              <div class="form-field clearfix">
+                <label>Email<em>*</em></label>
+                <input type="email" required name="_replyto" />
+              </div>
+              <div class="form-field clearfix">
+                <label>Subject</label>
+                <input type="text" />
+              </div>
+              <div class="form-field textarea clearfix">
+                <label>Message<em>*</em></label>
+                <textarea required name="message"></textarea>
+              </div>
+              <button id="contactSend" type="submit">Enviar</button>
+            </form>
+          </div>
         </div>
       </section>
     </div>
