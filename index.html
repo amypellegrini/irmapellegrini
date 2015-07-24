@@ -33,9 +33,9 @@
           <img src="img/leaf-155x125.png" alt="Leaf">
         </div>
 
-        <a class="contact-link" href="#contact">Contact</a>
+        <a class="contact-link" id="contact" href="#contact">Contact</a>
 
-        <div class="contact-info hidden">
+        <div class="contact-info hidden" id="contact-form">
           <h4>Contact</h4>
           <p>Mobile: (+44) 7777 625504</p>
           <p>Or <strong>send me an email:</strong></p>
@@ -58,7 +58,7 @@
                 <label>Message<em>*</em></label>
                 <textarea required name="message"></textarea>
               </div>
-              <button id="contactSend" type="submit">Enviar</button>
+              <button id="contactSend" type="submit">Send</button>
             </form>
           </div>
         </div>
@@ -68,6 +68,7 @@
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
     <script>window.jQuery || document.write('<script src="js/vendor/jquery-1.11.2.min.js"><\/script>')</script>
 
+    <script src="js/vendor/parsley.min.js"></script>
     <script src="js/plugins.js"></script>
     <script src="js/main.js"></script>
   </body>

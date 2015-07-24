@@ -120,14 +120,19 @@ p.tag-line {
 }
 
 .contact-info {
+  left: 50%;
+  position: absolute;
   background-color: rgba(0,0,0,0.7);
-  display: inline-block;
   border-radius: 6px;
   padding: 1em 2em;
   color: #fff;
+  top: 2em;
+  margin-left: -164px;
+  width: 328px;
 }
 
 .contact-info h4 {
+  margin-bottom: 1rem;
   font-size: 1.5rem;
   margin-top: 0;
   font-weight: 400;
@@ -142,6 +147,69 @@ p.tag-line {
 }
 
 .contact-info p {}
+
+.contact-info #contactSend {
+  width: 88px;
+  border: 1px solid #eee;
+  background-color: transparent;
+  text-transform: uppercase;
+  padding: 0.2em 1.5em;
+  border-radius: 3px;
+  position: relative;
+  left: 50%;
+  margin-left: -44px;
+}
+
+.contact-info #contactSend:hover {
+  background-color: #555;
+}
+
+.contact-info .form-field {
+  position: relative;
+}
+
+.contact-info .form-field input {
+  float: right;
+  border-radius: 3px;
+  color: #333;
+}
+
+.contact-info .form-field label {  
+  margin-left: 2em;
+  display: block;
+  float: left;
+  line-height: 2rem;
+  height: 2rem;
+}
+
+.contact-info .form-field.textarea label {
+  float: none;
+  clear: both;
+}
+
+.contact-info .form-field.textarea textarea {
+  color: #333;
+  border-radius: 3px;
+  margin-left: 2rem;
+  width: 291px;
+}
+
+.contact-info .form-field .parsley-errors-list li {
+  font-size: 0.7rem;
+  top: 0;
+  list-style-type: none;
+  position: absolute;
+  color: #ff0000;
+  width: 61px;
+  left: 87px;
+  height: 27px;
+  line-height: 0.8rem;
+}
+
+.contact-info .form-field.textarea .parsley-errors-list li {
+  left: 110px;
+  top: 5px;
+}
 
 /* ==========================================================================
    Media Queries
