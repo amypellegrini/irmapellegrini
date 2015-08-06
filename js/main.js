@@ -6,8 +6,7 @@
       hideContactForm = function(ev) {
         if (ev.target === contactForm[0] ||
             $(ev.target).closest('#contact-form')[0]) {
-          ev.stopPropagation();
-          return false;
+          return true;
         }
         $(contactForm).addClass('hidden');
       },
