@@ -78,6 +78,19 @@ header p {
   margin: 0;
 }
 
+nav a {
+  display: inline-block;
+  margin-right: 10px;
+}
+
+footer a {
+  text-decoration: none;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
 .main-container {
   padding: 1rem;
 }
