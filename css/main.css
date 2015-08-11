@@ -60,6 +60,10 @@ body {
   font-family: 'PT Sans';
 }
 
+a {
+  color: #552300;
+}
+
 header h1 {
   font-family: 'Great Vibes';
   font-size: 3rem;
@@ -85,28 +89,32 @@ header p {
   z-index: 0;
 }
 
+.tag-line-container {
+  overflow: hidden;
+}
+
 p.tag-line {
-  margin-top: 3rem;
+  margin: 0;
   line-height: 1.4;
 }
 
 .quote-open,
 .quote-close {
+  overflow: hidden;
   vertical-align: middle;
   position: relative;
   display: inline-block;
-  height: 1rem;
-  line-height: 1rem;
+  height: 7rem;
   color: #ccc;
 }
 
 .quote-open {
-  top: 2.8rem;
+  top: -2rem;
   font-size: 12rem;
 }
 
 .quote-close {
-  top: 1.6rem;
+  top: 0.9rem;
   font-size: 6rem;
 }
 
