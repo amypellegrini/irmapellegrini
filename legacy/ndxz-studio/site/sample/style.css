@@ -1,0 +1,80 @@
+/**
+* CSS
+* 
+* @version 1.0
+* @author Vaska 
+* @author Gregory Cadar
+*/
+* {margin: 0;padding: 0;}
+html{min-height: 700px;}
+body {font-size: 1em;font-family: Trebuchet MS, sans-serif;color:#333;background-color: #fff;margin:0 auto;}
+body.section-1 {}
+body.section-2 {}
+body.section-3 {}
+
+a:link {text-decoration:none;color: #6b9b6b; }
+a:active {text-decoration:none;color: #6b9b6b; }
+a:visited {text-decoration:none; color: #6b9b6b; }
+a:hover {text-decoration:underline;color: #6b9b6b; }
+a img {border:none;}
+
+#wrap {width:100%;float:left;}
+
+#nav {font-size:4em;font-weight:900;line-height:.5em;display:block;position:fixed;top:5px;bottom:0;left:40px;width:250px;text-align:left;margin:0;padding:0;filter:alpha(opacity=30);-moz-opacity:0.30;-khtml-opacity: 0.30;opacity: 0.30;}
+
+#nav a:link {text-decoration:none;color: #6b9b6b; }
+#nav a:active {text-decoration:none;color: #6b9b6b; }
+#nav a:visited {text-decoration:none; color: #6b9b6b; }
+#nav a:hover {text-decoration:none;color: #6b9b6b; }
+#nav a img {border:none;}
+
+a#right {display:block;float:right;}
+a#left {display:block;float:left;}
+
+#menu {width:250px;height:580px;top:50px;bottom:0;left:30px;position:fixed;background-color:white;filter:alpha(opacity=85);-moz-opacity:0.85;-khtml-opacity: 0.85;opacity: 0.85;font-size:0.9em;border:10px solid #e6eee6;border-radius:5px;-moz-border-radius: 5px;-webkit-border-radius:5px;}
+
+#menu ul {list-style: none;margin:10px 0;margin-left: 15px;display:block;font-size:1em;}
+#menu ul li.section-title {list-style: none; }
+
+li.active {text-decoration:underline;color: #6b9b6b;}
+
+#content {margin: 50px 0 0 315px;top:25px;background-color:#fff;}
+#content p {margin:5px;}
+
+.container_m {}
+.container {width:90%;}
+
+div.container p {padding-bottom:20px;line-height:normal;text-align:justify;}
+
+p {margin: 10px;}
+
+img.cc {margin:0;margin-left:-10px;padding:0;}
+
+h1 {}
+h2 {}
+h3 {}
+h4 {}
+
+#img-container {margin:0;margin-top:20px; padding: 0;}
+#img-container p {width:400px;margin:0;padding:0; }
+
+#once {clear:left;}
+img.logo {display:block;text-align:center;margin:0 auto;}
+#footer {font-size:0.8em;color:#666;margin-left:5px;margin-top:15px;}
+.captioning {font-size:0.8em;margin:0 auto;text-align:center;color:#666;}
+
+#text{display:block;font-size:.9em;padding-top:65px;/*height:480px;*/}
+#text object {margin-left:50px;}
+#text p {margin-bottom:15px;margin-left:5px;margin-right:10px;}
+
+img.bttn {width:32px;height:32px;margin-top:5px}
+
+span.fb{display:block;float:left;width:40px;}
+span.email{display:block;float:left;width:160px;}
+
+ul.news {display:block;float:left;margin:0; padding:0;padding-left:50px;}
+ul.news li {padding:5px 5px 5px 10px;}
+
+.max-width-100 {
+  max-width: 100%;
+}
