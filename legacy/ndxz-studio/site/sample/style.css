@@ -5,9 +5,23 @@
 * @author Vaska 
 * @author Gregory Cadar
 */
-* {margin: 0;padding: 0;}
-html{min-height: 700px;}
-body {font-size: 1em;font-family: Trebuchet MS, sans-serif;color:#333;background-color: #fff;margin:0 auto;}
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html{
+  min-height: 700px;
+}
+
+body {
+  font-size: 1em;
+  font-family: Trebuchet MS, sans-serif;
+  color:#333;
+  background-color: #fff;
+  margin:0 auto;
+}
+
 body.section-1 {}
 body.section-2 {}
 body.section-3 {}
@@ -39,7 +53,15 @@ a#left {display:block;float:left;}
 li.active {text-decoration:underline;color: #6b9b6b;}
 
 #content {margin: 50px 0 0 315px;top:25px;background-color:#fff;}
-#content p {margin:5px;}
+
+#content p {
+  margin: 5px;
+  color: #666;
+}
+
+#content .red {
+  color: #F00;
+}
 
 .container_m {}
 .container {width:90%;}
