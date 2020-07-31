@@ -1,0 +1,68 @@
+Arguments: 
+  /Users/amy/.nvm/versions/node/v12.7.0/bin/node /usr/local/Cellar/yarn/1.21.1/libexec/bin/yarn.js init
+
+PATH: 
+  /Users/amy/.jenv/shims:/Users/amy/.jenv/bin:/Users/amy/.jenv/shims:/Users/amy/.jenv/bin:/Library/Frameworks/Python.framework/Versions/3.7/bin:/Users/amy/.nvm/versions/node/v12.7.0/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+
+Yarn version: 
+  1.21.1
+
+Node version: 
+  12.7.0
+
+Platform: 
+  darwin x64
+
+Trace: 
+  Error: canceled
+      at Interface.<anonymous> (/usr/local/Cellar/yarn/1.21.1/libexec/lib/cli.js:136925:13)
+      at Interface.emit (events.js:203:13)
+      at Interface._ttyWrite (readline.js:880:16)
+      at ReadStream.onkeypress (readline.js:191:10)
+      at ReadStream.emit (events.js:203:13)
+      at emitKeys (internal/readline/utils.js:414:14)
+      at emitKeys.next (<anonymous>)
+      at ReadStream.onData (readline.js:1146:36)
+      at ReadStream.emit (events.js:203:13)
+      at addChunk (_stream_readable.js:294:12)
+
+npm manifest: 
+  {
+    "name": "irmapellegrini",
+    "version": "0.0.1",
+    "private": true,
+    "scripts": {
+      "start": "nodemon ./bin/www",
+      "test": "tape -r babel-register -r ignore-styles src/**/*.test.js"
+    },
+    "dependencies": {
+      "babel-preset-env": "^1.6.0",
+      "body-parser": "~1.17.1",
+      "cookie-parser": "~1.4.3",
+      "debug": "~2.6.3",
+      "express": "^4.15.3",
+      "hjs": "~0.0.6",
+      "morgan": "~1.8.1",
+      "nodemon": "^1.11.0",
+      "react": "^15.6.1",
+      "react-dom": "^15.6.1",
+      "react-redux": "^5.0.5",
+      "redux": "^3.7.2",
+      "serve-favicon": "~2.4.2",
+      "webpack": "^3.3.0"
+    },
+    "devDependencies": {
+      "babel-cli": "^6.24.1",
+      "babel-loader": "^7.1.1",
+      "babel-register": "^6.24.1",
+      "cheerio": "^1.0.0-rc.2",
+      "ignore-styles": "^5.0.1",
+      "tape": "^4.7.0"
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
