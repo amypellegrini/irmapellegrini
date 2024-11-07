@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Little Wooden People</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
@@ -15,6 +18,15 @@
         margin: 0;
         padding: 0;
         overflow: hidden;
+      }
+
+      main {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        position: relative;
+        height: 100vh;
+        padding: 10px 20px;
       }
 
       h1 {
@@ -58,13 +70,6 @@
         position: absolute;
         top: 0;
         z-index: -1;
-      }
-
-      main {
-        position: relative;
-        height: 100vh;
-        padding: 10px 20px;
-        box-sizing: border-box;
       }
 
       .exhibition {
@@ -119,7 +124,7 @@
       }
 
       .header-subtitle {
-        margin-top: -22px;
+        margin-top: -15px;
       }
 
       @media (max-width: 1024px) {
@@ -129,6 +134,10 @@
       }
 
       @media (max-width: 768px) {
+        main {
+          padding-bottom: env(safe-area-inset-bottom);
+        }
+
         .background-image {
           top: 10vh;
         }
@@ -159,9 +168,9 @@
     <main>
       <header>
         <h1>
-          Irma Pellegrini
+          The Little Wooden People
         </h1>
-        <p class="h3 text-blue text-center header-subtitle">Woodcarver</p>
+        <p class="h3 text-blue text-center header-subtitle">by Irma Pellegrini</p>
       </header>
       <article class="exhibition">
         <p class="subtitle text-red">
