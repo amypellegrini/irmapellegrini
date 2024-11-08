@@ -14,10 +14,17 @@
       rel="stylesheet"
     />
     <style>
+      html {
+        height: -webkit-fill-available;
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-top: env(safe-area-inset-top);
+      }
+
       body, html {
         margin: 0;
         padding: 0;
         overflow: hidden;
+        min-height: -webkit-fill-available;
       }
 
       main {
@@ -25,7 +32,8 @@
         max-width: 100%;
         box-sizing: border-box;
         position: relative;
-        height: 100vh;
+        height: 100%;
+        height: 100dvh;
         padding: 10px 20px;
       }
 
@@ -134,11 +142,6 @@
       }
 
       @media (max-width: 768px) {
-        main {
-          padding-top: env(safe-area-inset-top);
-          padding-bottom: env(safe-area-inset-bottom);
-        }
-
         .background-image {
           top: 10vh;
         }
