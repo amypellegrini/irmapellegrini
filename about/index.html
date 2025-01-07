@@ -23,63 +23,6 @@
       href="../assets/site/sample/style.css"
       type="text/css"
     />
-
-    <style type="text/css">
-      .grow {
-        float: left;
-        margin-bottom: 18px;
-      }
-      .thumb {
-        padding: 0;
-        text-align: left;
-        display: table;
-        height: 220px;
-        #position: relative;
-        overflow: hidden;
-        width: 220px;
-      }
-
-      .grow strong {
-        margin-top: 3px;
-        text-align: left;
-        display: block;
-        font-weight: normal;
-        text-align: center;
-      }
-      .grow em {
-        font-style: normal;
-        display: none;
-        text-align: center;
-      }
-
-      .thumb-it {
-        #position: absolute;
-        _top: 50%;
-        display: table-cell;
-        vertical-align: middle;
-        text-align: center;
-      }
-      .thumb-img {
-        #position: relative;
-        width: 220px;
-        display: block;
-      }
-    </style>
-
-    <script type="text/javascript" src="../assets/site/js/jquery.js"></script>
-    <script type="text/javascript" src="../assets/site/js/cookie.js"></script>
-    <script type="text/javascript" src="../assets/site/js/thw.js"></script>
-    <script
-      type="text/javascript"
-      src="../assets/site/js/grow.vaska.js"
-    ></script>
-
-    <script type="text/javascript">
-      path = "files/gimgs/";
-      $(document).ready(function () {
-        setTimeout("move_up()", 1);
-      });
-    </script>
   </head>
 
   <body class="section-1">
@@ -138,9 +81,9 @@
       </div>
 
       <div id="content">
-        <div class="container">
+        <article class="article-container">
           <!-- text and image -->
-          <p>
+          <p class="first-paragraph">
             Irma started making her first wood carvings at the beginning of the
             '80s in Argentina when looking for a way of expression. Developing
             different techniques of her own, she made progress in the knowledge
@@ -148,6 +91,11 @@
             exigent<br />
             aesthetic objectives.
           </p>
+
+          <figure class="article-image">
+            <img src="../files/gimgs/9_archive001.jpg" alt="Irma Pellegrini" />
+            <figcaption>Irma's early work</figcaption>
+          </figure>
 
           <p>
             In 1987 she started being known in the city of Neuquen, where she
@@ -202,7 +150,7 @@
           <div class="cl"><!-- --></div>
 
           <!-- end text and image -->
-        </div>
+        </article>
       </div>
     </div>
   </body>
