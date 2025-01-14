@@ -167,8 +167,9 @@ li.active {
 }
 /* Image styles */
 .article-image {
-  margin: 2rem 0;
+  margin: 2rem auto;
   position: relative;
+  width: 61%;
 }
 
 .article-image img {
