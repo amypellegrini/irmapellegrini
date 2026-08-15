@@ -1,0 +1,989 @@
+<title>Wall, Book, Vitrine</title>
+<style>
+  /* ============================================================
+     PAGE CHROME — theme-aware, deliberately quiet so it never
+     competes with the three directions it introduces.
+     ============================================================ */
+  :root {
+    --chrome-bg: #ffffff;
+    --chrome-raised: #f4f3f1;
+    --chrome-ink: #1b1a18;
+    --chrome-muted: #6a6862;
+    --chrome-line: #dedbd5;
+    --chrome-accent: #41576b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --chrome-bg: #131313;
+      --chrome-raised: #1d1d1c;
+      --chrome-ink: #eceae5;
+      --chrome-muted: #9a978f;
+      --chrome-line: #302f2d;
+      --chrome-accent: #8ba6bd;
+    }
+  }
+  :root[data-theme="dark"] {
+    --chrome-bg: #131313;
+    --chrome-raised: #1d1d1c;
+    --chrome-ink: #eceae5;
+    --chrome-muted: #9a978f;
+    --chrome-line: #302f2d;
+    --chrome-accent: #8ba6bd;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--chrome-bg);
+    color: var(--chrome-ink);
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  img { max-width: 100%; display: block; }
+
+  a { color: inherit; }
+
+  :focus-visible {
+    outline: 2px solid var(--chrome-accent);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+
+  .chrome-wrap {
+    max-width: 62rem;
+    margin: 0 auto;
+    padding: clamp(2.5rem, 6vw, 5rem) clamp(1.25rem, 4vw, 2.5rem);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .chrome-eyebrow {
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--chrome-muted);
+    margin: 0;
+  }
+
+  .chrome-wrap h1 {
+    margin: 0;
+    font-size: clamp(1.9rem, 4.5vw, 2.9rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+    font-weight: 600;
+  }
+
+  .chrome-wrap p.lede {
+    margin: 0;
+    max-width: 40rem;
+    font-size: 1.05rem;
+    line-height: 1.65;
+    color: var(--chrome-muted);
+  }
+
+  .chrome-note {
+    max-width: 40rem;
+    font-size: 0.92rem;
+    line-height: 1.65;
+    color: var(--chrome-muted);
+    margin: 0;
+  }
+
+  /* Label strip that introduces each direction */
+  .strip {
+    border-top: 1px solid var(--chrome-line);
+    background: var(--chrome-raised);
+    padding: clamp(1.75rem, 4vw, 2.5rem) clamp(1.25rem, 4vw, 2.5rem);
+  }
+  .strip-inner {
+    max-width: 62rem;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 2rem;
+    align-items: baseline;
+  }
+  .strip-num {
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    color: var(--chrome-muted);
+    text-transform: uppercase;
+  }
+  .strip-name {
+    font-size: clamp(1.3rem, 3vw, 1.75rem);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .strip-thesis {
+    flex: 1 1 22rem;
+    margin: 0;
+    color: var(--chrome-muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  /* ============================================================
+     DIRECTION A — "WALL"
+     Committed single visual world: a warm limewash gallery wall.
+     Every colour painted explicitly so it holds on any host ground.
+     ============================================================ */
+  .d-wall {
+    --w-ground: #e8e2d6;
+    --w-ground-deep: #ded7c8;
+    --w-ink: #262320;
+    --w-muted: #6e675c;
+    --w-accent: #41576b;
+    --w-line: #cdc5b4;
+
+    background: var(--w-ground);
+    color: var(--w-ink);
+    font-family: Futura, "Avenir Next", Avenir, "Century Gothic", sans-serif;
+    padding-bottom: clamp(3rem, 7vw, 5rem);
+  }
+  .d-wall .w-in {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 0 clamp(1.25rem, 4vw, 3rem);
+  }
+  .d-wall .w-top {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 2rem;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-top: clamp(1.75rem, 4vw, 2.75rem);
+    padding-bottom: clamp(2.5rem, 6vw, 4rem);
+  }
+  .d-wall .w-mark {
+    font-size: 0.9rem;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .d-wall .w-nav {
+    display: flex;
+    gap: clamp(1rem, 3vw, 2.25rem);
+    font-size: 0.72rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--w-muted);
+  }
+  .d-wall .w-nav span { cursor: default; }
+
+  .d-wall .w-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: end;
+    padding-bottom: clamp(3rem, 8vw, 6rem);
+  }
+  .d-wall .w-hero-img {
+    /* the piece hangs on the wall and casts a real shadow */
+    box-shadow: 0 1.5rem 3rem rgba(60, 48, 30, 0.24);
+    background: var(--w-ground-deep);
+  }
+  .d-wall .w-hero h2 {
+    margin: 0 0 1rem;
+    font-size: clamp(1.9rem, 4vw, 2.9rem);
+    line-height: 1.08;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  .d-wall .w-hero p {
+    margin: 0;
+    font-size: 0.98rem;
+    line-height: 1.7;
+    color: var(--w-muted);
+    max-width: 26rem;
+  }
+  .d-wall .w-rule {
+    height: 1px;
+    background: var(--w-line);
+    margin: 0 0 1.25rem;
+  }
+
+  .d-wall .w-sec-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--w-accent);
+    margin: 0 0 1.5rem;
+    font-weight: 600;
+  }
+
+  /* modular grid — echoes the 576 blocks of 12 x 12 cm */
+  .d-wall .w-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+    gap: clamp(1.25rem, 3vw, 2.25rem);
+    padding-bottom: clamp(3rem, 7vw, 5rem);
+  }
+  .d-wall .w-block figure {
+    margin: 0;
+    aspect-ratio: 1 / 1;
+    background: var(--w-ground-deep);
+    box-shadow: 0 0.5rem 1.5rem rgba(60, 48, 30, 0.18);
+    overflow: hidden;
+    transition: transform 220ms ease, box-shadow 220ms ease;
+  }
+  .d-wall .w-block figure img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .d-wall .w-block:hover figure {
+    transform: translateY(-4px);
+    box-shadow: 0 1.1rem 2.4rem rgba(60, 48, 30, 0.26);
+  }
+  .d-wall .w-cap {
+    margin: 0.75rem 0 0;
+    font-size: 0.74rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--w-muted);
+  }
+
+  .d-wall .w-visit {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: clamp(1.5rem, 4vw, 3rem);
+    border-top: 1px solid var(--w-line);
+    padding-top: clamp(2rem, 5vw, 3rem);
+  }
+  .d-wall .w-visit h4 {
+    margin: 0 0 0.6rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--w-accent);
+    font-weight: 600;
+  }
+  .d-wall .w-visit p {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.75;
+    color: var(--w-ink);
+  }
+  .d-wall .w-visit p.dim { color: var(--w-muted); }
+
+  @media (max-width: 46rem) {
+    .d-wall .w-hero { grid-template-columns: 1fr; align-items: start; }
+  }
+
+  /* ============================================================
+     DIRECTION B — "CATALOGUE"
+     A monograph: the archive, its dates, materials and provenance.
+     ============================================================ */
+  .d-cat {
+    --c-paper: #efede7;
+    --c-ink: #191817;
+    --c-muted: #6b6862;
+    --c-accent: #2f4a3c;
+    --c-line: #d4d1c8;
+
+    background: var(--c-paper);
+    color: var(--c-ink);
+    font-family: Charter, "Iowan Old Style", Georgia, "Times New Roman", serif;
+    padding-bottom: clamp(3rem, 7vw, 5rem);
+  }
+  .d-cat .c-in {
+    max-width: 66rem;
+    margin: 0 auto;
+    padding: 0 clamp(1.25rem, 4vw, 3rem);
+  }
+  .d-cat .c-masthead {
+    border-bottom: 2px solid var(--c-ink);
+    padding: clamp(2rem, 5vw, 3rem) 0 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem 2rem;
+  }
+  .d-cat .c-masthead h2 {
+    margin: 0;
+    font-family: "Iowan Old Style", Georgia, serif;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    font-weight: 400;
+    letter-spacing: 0.02em;
+  }
+  .d-cat .c-standfirst {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--c-muted);
+  }
+
+  /* asymmetric measure + margin rail carrying the dates */
+  .d-cat .c-body {
+    display: grid;
+    grid-template-columns: 9rem minmax(0, 34rem);
+    gap: clamp(1.5rem, 4vw, 3.5rem);
+    padding: clamp(2.5rem, 6vw, 4rem) 0;
+    justify-content: start;
+  }
+  .d-cat .c-rail {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.68rem;
+    line-height: 1.9;
+    color: var(--c-muted);
+    letter-spacing: 0.04em;
+    border-top: 1px solid var(--c-line);
+    padding-top: 0.5rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .d-cat .c-rail b {
+    display: block;
+    color: var(--c-accent);
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    font-size: 0.62rem;
+  }
+  .d-cat .c-rail span { display: block; }
+
+  .d-cat .c-text > p {
+    margin: 0 0 1.15rem;
+    font-size: 1.02rem;
+    line-height: 1.72;
+  }
+  .d-cat .c-text > p:first-of-type::first-letter {
+    float: left;
+    font-family: "Iowan Old Style", Georgia, serif;
+    font-size: 3.6rem;
+    line-height: 0.82;
+    padding: 0.1rem 0.5rem 0 0;
+    color: var(--c-accent);
+  }
+  .d-cat figure {
+    margin: 2rem 0;
+  }
+  .d-cat figure img { width: 100%; }
+  .d-cat figcaption {
+    margin-top: 0.7rem;
+    border-top: 1px solid var(--c-line);
+    padding-top: 0.55rem;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.68rem;
+    line-height: 1.75;
+    color: var(--c-muted);
+  }
+  .d-cat figcaption b {
+    color: var(--c-ink);
+    font-weight: 600;
+    display: block;
+    letter-spacing: 0.02em;
+  }
+
+  /* index of works, set as a catalogue table */
+  .d-cat .c-index-wrap { overflow-x: auto; }
+  .d-cat table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    min-width: 34rem;
+  }
+  .d-cat caption {
+    text-align: left;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--c-accent);
+    padding-bottom: 0.85rem;
+    font-weight: 600;
+  }
+  .d-cat th {
+    text-align: left;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--c-muted);
+    font-weight: 400;
+    border-bottom: 1px solid var(--c-ink);
+    padding: 0 1rem 0.5rem 0;
+  }
+  .d-cat td {
+    padding: 0.7rem 1rem 0.7rem 0;
+    border-bottom: 1px solid var(--c-line);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  .d-cat td.num {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    color: var(--c-muted);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .d-cat td.mat {
+    font-size: 0.82rem;
+    color: var(--c-muted);
+    font-style: italic;
+  }
+
+  @media (max-width: 46rem) {
+    .d-cat .c-body { grid-template-columns: 1fr; }
+  }
+
+  /* ============================================================
+     DIRECTION C — "VITRINE"
+     Museum lighting. Deliberately single-world (dark), painted
+     explicitly so it never borrows the host ground.
+     ============================================================ */
+  .d-vit {
+    --v-ground: #16130f;
+    --v-raised: #211d17;
+    --v-ink: #e9e3d7;
+    --v-muted: #948b7c;
+    --v-accent: #c2924e;
+    --v-line: #353026;
+
+    background: var(--v-ground);
+    color: var(--v-ink);
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    padding-bottom: clamp(3rem, 7vw, 5rem);
+  }
+  .d-vit .v-in {
+    max-width: 74rem;
+    margin: 0 auto;
+    padding: 0 clamp(1.25rem, 4vw, 3rem);
+  }
+  .d-vit .v-top {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem 2rem;
+    padding: clamp(1.75rem, 4vw, 2.5rem) 0;
+    border-bottom: 1px solid var(--v-line);
+  }
+  .d-vit .v-mark {
+    font-size: 0.78rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--v-ink);
+  }
+  .d-vit .v-nav {
+    display: flex;
+    gap: clamp(1rem, 3vw, 2rem);
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--v-muted);
+  }
+
+  .d-vit .v-hero {
+    position: relative;
+    margin: 0;
+    background: #0d0b08;
+  }
+  .d-vit .v-hero img {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    opacity: 0.92;
+  }
+  .d-vit .v-hero-cap {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: clamp(2rem, 6vw, 4.5rem) clamp(1.25rem, 4vw, 3rem);
+    background: linear-gradient(to top, rgba(15, 13, 9, 0.94), rgba(15, 13, 9, 0));
+  }
+  .d-vit .v-hero-cap h2 {
+    margin: 0 0 0.6rem;
+    font-family: Didot, "Hoefler Text", "Playfair Display", Georgia, serif;
+    font-weight: 300;
+    font-size: clamp(2.1rem, 6vw, 4.2rem);
+    line-height: 1.02;
+    letter-spacing: 0.01em;
+    color: #f3eee3;
+    text-wrap: balance;
+  }
+  .d-vit .v-hero-cap p {
+    margin: 0;
+    font-size: 0.74rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--v-accent);
+  }
+
+  /* one object at a time, lit */
+  .d-vit .v-object {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(2rem, 6vw, 5rem);
+    align-items: center;
+    padding: clamp(3rem, 8vw, 6rem) 0;
+    border-bottom: 1px solid var(--v-line);
+  }
+  .d-vit .v-object.flip > figure { order: 2; }
+  .d-vit .v-object > figure {
+    margin: 0;
+    background: var(--v-raised);
+    padding: clamp(1.25rem, 3vw, 2.5rem);
+    /* the lit case */
+    box-shadow: inset 0 0 5rem rgba(0, 0, 0, 0.55);
+  }
+  .d-vit .v-object > figure img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+  }
+  .d-vit .v-object h3 {
+    margin: 0 0 0.9rem;
+    font-family: Didot, "Hoefler Text", Georgia, serif;
+    font-weight: 300;
+    font-size: clamp(1.5rem, 3.2vw, 2.3rem);
+    line-height: 1.12;
+    text-wrap: balance;
+  }
+  .d-vit .v-object p {
+    margin: 0 0 1rem;
+    font-size: 0.95rem;
+    line-height: 1.75;
+    color: var(--v-muted);
+    max-width: 30rem;
+  }
+  .d-vit .v-meta {
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--v-accent);
+    margin: 0 0 1rem;
+  }
+  .d-vit .v-more {
+    display: inline-block;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--v-ink);
+    border-bottom: 1px solid var(--v-accent);
+    padding-bottom: 0.3rem;
+    text-decoration: none;
+  }
+
+  .d-vit .v-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 1px;
+    background: var(--v-line);
+    border: 1px solid var(--v-line);
+    margin: clamp(3rem, 7vw, 5rem) 0 0;
+  }
+  .d-vit .v-strip > div {
+    background: var(--v-ground);
+    padding: 1.4rem 1.2rem;
+  }
+  .d-vit .v-strip h4 {
+    margin: 0 0 0.4rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+    color: var(--v-ink);
+  }
+  .d-vit .v-strip p {
+    margin: 0;
+    font-size: 0.72rem;
+    line-height: 1.6;
+    color: var(--v-muted);
+  }
+
+  @media (max-width: 46rem) {
+    .d-vit .v-object { grid-template-columns: 1fr; }
+    .d-vit .v-object.flip > figure { order: 0; }
+  }
+</style>
+
+<div class="chrome-wrap">
+  <p class="chrome-eyebrow">Irma Pellegrini &middot; irmapellegrini.co.uk</p>
+  <h1>Three directions for the redesign</h1>
+  <p class="lede">
+    Each one below is a working page, not a mockup &mdash; real photographs, real
+    text from the site. They differ in what they believe the site is for, so
+    compare the idea first and the colours second. Pick one, or tell me which
+    parts of which to combine.
+  </p>
+  <p class="chrome-note">
+    Typefaces here are drawn from what your computer already has, so they may
+    render slightly differently on another machine. The finished site will
+    carry its own fonts, chosen properly.
+  </p>
+</div>
+
+<!-- =========================================================
+     ONE — WALL
+     ========================================================= -->
+<div class="strip">
+  <div class="strip-inner">
+    <span class="strip-num">One</span>
+    <p class="strip-name">Wall</p>
+    <p class="strip-thesis">
+      The screen behaves like the wall the work hangs on. Warm limewash ground,
+      pieces casting a real shadow, a modular square grid that echoes the 576
+      blocks of Movements of Living.
+    </p>
+  </div>
+</div>
+
+<section class="d-wall">
+  <div class="w-in">
+    <div class="w-top">
+      <div class="w-mark">Irma Pellegrini</div>
+      <nav class="w-nav">
+        <span>Work</span><span>Series</span><span>Bio</span><span>Visit</span>
+      </nav>
+    </div>
+
+    <div class="w-hero">
+      <img class="w-hero-img" src="{{IMG:1_irmabricklane-2.jpg}}" alt="Two small carved wooden figures holding a maple leaf above them like an umbrella, in a garden" />
+      <div>
+        <div class="w-rule"></div>
+        <h2>The little wooden people</h2>
+        <p>
+          Carved from offcuts, sawmill rests, forest floor and the banks of
+          lakes and streams. No stain and no paint &mdash; only the natural
+          colour and grain of the wood. Made in Argentina since the early
+          eighties, in London since 2001.
+        </p>
+      </div>
+    </div>
+
+    <p class="w-sec-label">Movements of Living</p>
+    <div class="w-grid">
+      <div class="w-block">
+        <figure><img src="{{IMG:18_01.jpg}}" alt="White wooden block with a figure climbing a ladder and a figure below" /></figure>
+        <p class="w-cap">No. 1</p>
+      </div>
+      <div class="w-block">
+        <figure><img src="{{IMG:18_02.jpg}}" alt="Carved wooden block from Movements of Living" /></figure>
+        <p class="w-cap">No. 2</p>
+      </div>
+      <div class="w-block">
+        <figure><img src="{{IMG:18_03.jpg}}" alt="Carved wooden block from Movements of Living" /></figure>
+        <p class="w-cap">No. 3</p>
+      </div>
+      <div class="w-block">
+        <figure><img src="{{IMG:18_04.jpg}}" alt="Carved wooden block from Movements of Living" /></figure>
+        <p class="w-cap">No. 4</p>
+      </div>
+      <div class="w-block">
+        <figure><img src="{{IMG:18_05.jpg}}" alt="Carved wooden block from Movements of Living" /></figure>
+        <p class="w-cap">No. 5</p>
+      </div>
+      <div class="w-block">
+        <figure><img src="{{IMG:18_06.jpg}}" alt="Carved wooden block from Movements of Living" /></figure>
+        <p class="w-cap">No. 6</p>
+      </div>
+    </div>
+
+    <div class="w-visit">
+      <div>
+        <h4>Showing now</h4>
+        <p>Artisan, 85 Brick Lane</p>
+        <p class="dim">London E1 6QL</p>
+      </div>
+      <div>
+        <h4>Open</h4>
+        <p>Thursday to Saturday, 11am &ndash; 6pm</p>
+        <p>Sunday, 10am &ndash; 6pm</p>
+      </div>
+      <div>
+        <h4>Enquiries</h4>
+        <p>irmapellegrini@gmail.com</p>
+        <p class="dim">Commissions accepted. Space available for workshops.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+     TWO — CATALOGUE
+     ========================================================= -->
+<div class="strip">
+  <div class="strip-inner">
+    <span class="strip-num">Two</span>
+    <p class="strip-name">Catalogue</p>
+    <p class="strip-thesis">
+      The site as a monograph of forty years. A margin rail carries the dates,
+      captions carry materials and provenance, and the works index reads as a
+      proper catalogue. Best if the archive is the thing worth showing.
+    </p>
+  </div>
+</div>
+
+<section class="d-cat">
+  <div class="c-in">
+    <div class="c-masthead">
+      <h2>Irma Pellegrini</h2>
+      <span class="c-standfirst">Wood carver &middot; C&oacute;rdoba &middot; Neuqu&eacute;n &middot; London</span>
+    </div>
+
+    <div class="c-body">
+      <aside class="c-rail">
+        <b>Chronology</b>
+        <span>1980s &mdash; Argentina</span>
+        <span>1987 &mdash; Neuqu&eacute;n</span>
+        <span>1993 &mdash; C&oacute;rdoba</span>
+        <span>1995 &mdash; Pinamar</span>
+        <span>1997 &mdash; Buenos Aires</span>
+        <span>2001 &mdash; London</span>
+        <span>2007 &mdash; Greenwich</span>
+        <span>2012 &mdash; Taipei</span>
+      </aside>
+
+      <div class="c-text">
+        <p>
+          Irma made her first wood carvings at the beginning of the eighties in
+          Argentina, looking for a way of expression. Developing techniques of
+          her own, she made progress in the knowledge of the wood and how to
+          work with it, whilst facing more and more exigent aesthetic
+          objectives.
+        </p>
+
+        <figure>
+          <img src="{{IMG:9_archive002.jpg}}" alt="Carved wooden relief of three children looking through a window, set in a dark reclaimed timber frame" />
+          <figcaption>
+            <b>Three children looking through a window</b>
+            2002&ndash;2003 &middot; rauli, palo santo, alerce, cypress, alamo,
+            cancharana<br />
+            With recycled pieces of an old wood frame from Irma's father's
+            shed.<br />
+            Sold at Camden Lock Market, London, 2004.
+          </figcaption>
+        </figure>
+
+        <p>
+          In 1987 she became known in the city of Neuqu&eacute;n, showing her
+          pictures at a shop in the centre. Given the impact of the exhibition
+          and the demands from the public, she began teaching children and
+          adults the fruit of those introspective years. Her techniques spread
+          directly and indirectly &mdash; some of her disciples still teach them
+          in schools and workshops today.
+        </p>
+
+        <p>
+          In her pictures she uses only wood's natural colour and grain,
+          achieving this from the rests of sawmills, the forest ground, and the
+          banks of lakes and streams. In 1993 she showed at the XI
+          C&oacute;rdoba International Handicrafts Fair, where she took first
+          prize in the carved wood category along with two special mentions.
+        </p>
+
+        <figure>
+          <img src="{{IMG:9_archive004.jpg}}" alt="Carved wooden picture from Irma Pellegrini's early work" />
+          <figcaption>
+            <b>Neuqu&eacute;n</b>
+            1991 &middot; carved and assembled native woods
+          </figcaption>
+        </figure>
+
+        <p>
+          In 2001 Irma introduced her work in the United Kingdom, exhibiting at
+          Camden Lock, Green Park, Chelsea, Highgate, the Red Ban Gallery of
+          King's Lynn and, in 2007, the Greenwich Artists Collective. She
+          continues to work on new shows and exhibitions.
+        </p>
+      </div>
+    </div>
+
+    <div class="c-index-wrap">
+      <table>
+        <caption>Index of works</caption>
+        <thead>
+          <tr>
+            <th scope="col">Series</th>
+            <th scope="col">Dates</th>
+            <th scope="col">Extent</th>
+            <th scope="col">Materials</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Movements of Living</td>
+            <td class="num">2011&mdash;</td>
+            <td class="num">576 blocks, 12 &times; 12 cm</td>
+            <td class="mat">native woods, carpentry offcuts</td>
+          </tr>
+          <tr>
+            <td>Leaves</td>
+            <td class="num">2013&mdash;</td>
+            <td class="num">Continuing</td>
+            <td class="mat">park leaves, carpentry offcuts</td>
+          </tr>
+          <tr>
+            <td>Tribute to Valentine</td>
+            <td class="num">2014</td>
+            <td class="num">80 movements, 4 forms</td>
+            <td class="mat">carved wood, painted frame</td>
+          </tr>
+          <tr>
+            <td>Art Corner @ The Coffee Point</td>
+            <td class="num">2012&mdash;</td>
+            <td class="num">Installation</td>
+            <td class="mat">mixed, wall-mounted</td>
+          </tr>
+          <tr>
+            <td>On The Way To&hellip;</td>
+            <td class="num">2012</td>
+            <td class="num">Taipei, Taiwan</td>
+            <td class="mat">with CAMPOBAG</td>
+          </tr>
+          <tr>
+            <td>Previous work</td>
+            <td class="num">1986&ndash;2009</td>
+            <td class="num">19 works archived</td>
+            <td class="mat">rauli, palo santo, alerce, cypress</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================
+     THREE — VITRINE
+     ========================================================= -->
+<div class="strip">
+  <div class="strip-inner">
+    <span class="strip-num">Three</span>
+    <p class="strip-name">Vitrine</p>
+    <p class="strip-thesis">
+      Museum lighting. A dark warm ground, one object at a time, each lit inside
+      its case. The white-framed pieces read strongest here &mdash; but the
+      archive photographs, which are already dark, have the least room.
+    </p>
+  </div>
+</div>
+
+<section class="d-vit">
+  <div class="v-in">
+    <div class="v-top">
+      <div class="v-mark">Irma Pellegrini</div>
+      <nav class="v-nav">
+        <span>Series</span><span>Archive</span><span>Bio</span><span>Contact</span>
+      </nav>
+    </div>
+  </div>
+
+  <figure class="v-hero">
+    <img src="{{IMG:1_irmabricklane-2.jpg}}" alt="Two small carved wooden figures holding a maple leaf above them like an umbrella, in a garden" />
+    <div class="v-hero-cap">
+      <div class="v-in" style="padding: 0;">
+        <h2>The little wooden people</h2>
+        <p>Carved in London &middot; Since 1986</p>
+      </div>
+    </div>
+  </figure>
+
+  <div class="v-in">
+    <div class="v-object">
+      <figure>
+        <img src="{{IMG:20_112irma1email.jpg}}" alt="White painted frame with a small carved figure climbing a ladder and another figure standing below" />
+      </figure>
+      <div>
+        <p class="v-meta">Series &middot; 80 movements</p>
+        <h3>Tribute to Valentine</h3>
+        <p>
+          A limited collection of eighty movements in four different forms, for
+          the priest who was killed for marrying a couple in a place and time
+          where it was forbidden. No one knows what happened to the couple
+          later.
+        </p>
+        <p>
+          Following the pulse of life, we honour Valentine by being present,
+          open and perceptive to our own partners.
+        </p>
+        <a class="v-more" href="#">See the four forms</a>
+      </div>
+    </div>
+
+    <div class="v-object flip">
+      <figure>
+        <img src="{{IMG:17_14hojas1.jpg}}" alt="Small figures made from dried leaves and carved wood, pinned to a pale wall" />
+      </figure>
+      <div>
+        <p class="v-meta">Series &middot; Continuing</p>
+        <h3>Leaves</h3>
+        <p>
+          These leaves come from the parks and trails. All are important and
+          unique; they once stood here like us, and every spring they return.
+          The figures are made with simple pieces of wood from cuts in
+          carpentry.
+        </p>
+        <p>
+          It is an artistic expression that reflects us in our daily lives.
+          Whatever we do, there are many times when we feel like a leaf in the
+          wind.
+        </p>
+        <a class="v-more" href="#">See the series</a>
+      </div>
+    </div>
+
+    <div class="v-object">
+      <figure>
+        <img src="{{IMG:26_1irma001v2.jpg}}" alt="Two visitors photographing a large wall installation of leaf figures arranged in a spiral" />
+      </figure>
+      <div>
+        <p class="v-meta">Installation &middot; Brick Lane</p>
+        <h3>Art Corner at The Coffee Point</h3>
+        <p>
+          Installations built over more than a year in Brick Lane, where Irma
+          sells her work every Sunday at the Sunday Up Market, on the first
+          floor.
+        </p>
+        <a class="v-more" href="#">Visit on a Sunday</a>
+      </div>
+    </div>
+
+    <div class="v-strip">
+      <div>
+        <h4>Movements of Living</h4>
+        <p>576 blocks of wood, each 12 by 12 cm</p>
+      </div>
+      <div>
+        <h4>On The Way To&hellip;</h4>
+        <p>Taipei, October 2012</p>
+      </div>
+      <div>
+        <h4>1986 to 2009</h4>
+        <p>The Argentine archive</p>
+      </div>
+      <div>
+        <h4>Enquiries</h4>
+        <p>irmapellegrini@gmail.com</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="chrome-wrap">
+  <p class="chrome-eyebrow">What happens next</p>
+  <h1>Same content underneath</h1>
+  <p class="lede">
+    Whichever you choose, the rebuild is the same underneath: one shared layout,
+    a single stylesheet, each series written as its own short file, images
+    resized so the site stops sending full-size photographs to phones, and the
+    broken links to the old CMS finally gone.
+  </p>
+  <p class="chrome-note">
+    Two things I still need from you: whether &ldquo;The Little Wooden
+    People&rdquo; or your own name should lead the site, and whether the shop
+    should take payment online or keep pointing people to Brick Lane on a
+    Sunday.
+  </p>
+</div>
