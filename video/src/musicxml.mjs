@@ -41,8 +41,8 @@ function pianoDynamic(bar, bars) {
 }
 
 function stringsDynamic(bar, bars) {
-  if (bar === STRINGS_ENTER_AT_BAR) return 'ppp';
-  if (bar === bars - 1) return 'pp'; // a little more under the last chord
+  if (bar === STRINGS_ENTER_AT_BAR) return 'pp';
+  if (bar === bars - 1) return 'p'; // a little more under the last chord
   return null;
 }
 

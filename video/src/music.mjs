@@ -142,18 +142,69 @@ function midiFile(events, bpm) {
   return Buffer.concat([header, Buffer.from(body)]);
 }
 
-// Trims to length, takes a little brightness off and sets a steady level.
-// Sampled instruments can start a moment late, so anything before the first
-// sound is cut to keep the first note on the first frame.
-async function finish(raw, out, seconds) {
+// A room to put the instruments in: two seconds of filtered noise that dies
+// away, which ffmpeg convolves with the music. Seeded, so it never changes.
+function roomImpulse(rate = 48000, seconds = 2.0, decay = 1.7) {
+  const random = rng(2026);
+  const frames = Math.floor(rate * seconds);
+  const preDelay = Math.floor(rate * 0.018);
+  const samples = new Float32Array(frames * 2);
+  let energy = 0;
+  for (let channel = 0; channel < 2; channel++) {
+    let low = 0;
+    for (let i = preDelay; i < frames; i++) {
+      const t = (i - preDelay) / rate;
+      low += 0.25 * (random() * 2 - 1 - low); // soften the top end
+      const value = low * Math.exp((-6.9 * t) / decay) * Math.min(1, t / 0.004);
+      samples[i * 2 + channel] = value;
+      energy += value * value;
+    }
+  }
+  // Scaled so the reverb alone comes out about as loud as the music going in.
+  const gain = 0.32 / Math.sqrt(energy / 2);
+  const header = Buffer.alloc(44);
+  header.write('RIFF', 0);
+  header.writeUInt32LE(36 + samples.length * 4, 4);
+  header.write('WAVEfmt ', 8);
+  header.writeUInt32LE(16, 16);
+  header.writeUInt16LE(3, 20); // 32-bit float
+  header.writeUInt16LE(2, 22);
+  header.writeUInt32LE(rate, 24);
+  header.writeUInt32LE(rate * 8, 28);
+  header.writeUInt16LE(8, 32);
+  header.writeUInt16LE(32, 34);
+  header.write('data', 36);
+  header.writeUInt32LE(samples.length * 4, 40);
+  const body = Buffer.alloc(samples.length * 4);
+  samples.forEach((value, i) => body.writeFloatLE(value * gain, i * 4));
+  return Buffer.concat([header, body]);
+}
+
+// Trims to length, optionally adds a gentle room reverb (`reverb` is how
+// loud it is next to the music: 0.22 is about 13 dB underneath), takes a little brightness off and sets a
+// steady level. Sampled instruments can start a moment late, so anything
+// before the first sound is cut to keep the first note on the first frame.
+async function finish(raw, out, seconds, reverb = 0) {
   const probe = spawnSync(FFMPEG, ['-hide_banner', '-i', raw, '-af', 'silencedetect=noise=-55dB:d=0.01', '-f', 'null', '-'], { encoding: 'utf8' });
   const lead = /silence_start: 0(?:\.0+)?\b[\s\S]*?silence_end: ([\d.]+)/.exec(probe.stderr || '');
   const start = lead ? Math.max(0, Number(lead[1]) - 0.01) : 0;
-  await ffmpeg([
-    '-i', raw,
-    '-af', `atrim=start=${start.toFixed(3)},asetpts=PTS-STARTPTS,atrim=0:${seconds.toFixed(3)},highpass=f=35,lowpass=f=9000,loudnorm=I=-17:TP=-1.5:LRA=11,aresample=48000`,
-    '-c:a', 'pcm_s16le', out,
-  ]);
+  const head = `atrim=start=${start.toFixed(3)},asetpts=PTS-STARTPTS,aresample=48000,aformat=channel_layouts=stereo`;
+  const tail = `atrim=0:${seconds.toFixed(3)},highpass=f=35,lowpass=f=9000,loudnorm=I=-17:TP=-1.5:LRA=11,aresample=48000`;
+
+  if (reverb > 0) {
+    const impulse = out.replace(/\.wav$/, '.room.wav');
+    await writeFile(impulse, roomImpulse());
+    await ffmpeg([
+      '-i', raw, '-i', impulse,
+      '-filter_complex',
+      `[0:a]${head},asplit[dry][send];[send][1:a]afir=dry=1:wet=1:gtype=none:irnorm=-1[room];` +
+        `[dry][room]amix=inputs=2:weights='1 ${reverb}':normalize=0,${tail}[a]`,
+      '-map', '[a]', '-c:a', 'pcm_s16le', out,
+    ]);
+    await rm(impulse, { force: true });
+  } else {
+    await ffmpeg(['-i', raw, '-af', `${head},${tail}`, '-c:a', 'pcm_s16le', out]);
+  }
   await rm(raw, { force: true });
 }
 
@@ -165,7 +216,7 @@ async function withMuseScore(out, seconds, bpm) {
   await writeFile(score, musicXml(seconds, bpm));
   await run(app, ['-o', raw, score]);
   await rm(score, { force: true });
-  await finish(raw, out, seconds);
+  await finish(raw, out, seconds, 0.22);
   return 'piano and strings, played by MuseScore';
 }
 
