@@ -1,0 +1,8 @@
+.DS_Store
+node_modules/
+
+# Reel pipeline: raw footage, intermediates and renders stay local
+video/footage/*
+!video/footage/.gitkeep
+video/.cache/
+video/out/
