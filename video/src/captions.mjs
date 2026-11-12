@@ -13,10 +13,10 @@ GlobalFonts.registerFromPath(font('public-sans', 'public-sans-latin-600-normal.w
 GlobalFonts.registerFromPath(font('public-sans', 'public-sans-latin-400-normal.woff2'), 'Reel Sans Regular');
 GlobalFonts.registerFromPath(font('great-vibes', 'great-vibes-latin-400-normal.woff2'), 'Reel Script');
 
-// Sizes are for a 1080 px wide frame. y is the centre of the caption; the
-// default keeps it clear of Instagram's own buttons and caption text.
+// Sizes are for a 1080 px wide frame. y is the centre of the caption.
+// Subtitles sit in the middle of the lower third (y 1600 of 1920).
 const STYLES = {
-  caption: { font: 'Reel Sans', size: 56, lineHeight: 1.28, color: '#fffaf0', box: 'rgba(28,20,13,0.78)', padX: 34, padY: 24, radius: 26, maxWidth: 860, y: 1400 },
+  caption: { font: 'Reel Sans', size: 56, lineHeight: 1.28, color: '#fffaf0', box: 'rgba(28,20,13,0.78)', padX: 34, padY: 24, radius: 26, maxWidth: 860, y: 1600 },
   title: { font: 'Reel Script', size: 136, lineHeight: 1.05, color: '#654530', maxWidth: 1000, y: 1190 },
   byline: { font: 'Reel Sans', size: 50, lineHeight: 1.2, color: '#305065', maxWidth: 960, y: 1330 },
   url: { font: 'Reel Sans Regular', size: 40, lineHeight: 1.2, color: '#654530', maxWidth: 960, y: 1420 },

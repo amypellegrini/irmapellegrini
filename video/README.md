@@ -45,8 +45,8 @@ Open `timeline.mjs`. The comment at the top lists every option.
   zoom over a blurred copy of the picture, `'left'`, `'right'`, `'up'` and
   `'down'` pan across it.
 - **Captions** are on their own track with a start beat and a length, so one
-  line can stay up across several shots. They sit above the area Instagram
-  covers with its own buttons and text.
+  line can stay up across several shots. They sit in the middle of the
+  lower third; set `y` on a caption to move it.
 
 Rendered scenes are cached in `.cache/`, so after an edit only the scenes
 that changed are rendered again.
