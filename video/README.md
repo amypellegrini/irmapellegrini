@@ -10,7 +10,8 @@ edit followed by a re-render.
 - Node 18 or newer
 - ffmpeg on the PATH (`brew install ffmpeg`), or point `FFMPEG_PATH` and
   `FFPROBE_PATH` at a build
-- For the sampled music: FluidSynth and MuseScore (see Music below)
+- For recorded-instrument music: MuseScore, ideally with Muse Sounds (see
+  Music below)
 
 ## Rendering
 
@@ -53,15 +54,22 @@ that changed are rendered again.
 
 ## Music
 
-`src/music.mjs` writes a short piano piece with quiet strings (D major, 72
-bpm) as MIDI and plays it through FluidSynth using the sampled soundfont that
-ships with MuseScore, so it sounds like recorded instruments. Nothing is
-licensed from anyone and the tempo always matches the cuts.
+The backing track is a short piano piece with quiet strings (D major, 72
+bpm). The notes are in `src/piece.mjs`; `src/music.mjs` gets them played by
+the best instrument on the machine:
 
-It needs FluidSynth (`brew install fluid-synth`) and MuseScore installed in
-`/Applications`, or `SOUNDFONT` pointing at any General MIDI soundfont.
-Without them the render still works, using a plainer synthesised track from
-`src/synth.mjs`. `npm run music` writes just the track to `out/music.wav`.
+1. **MuseScore** (`/Applications/MuseScore 4.app`). The piece is written out
+   as a score and MuseScore plays it. With Muse Sounds installed from Muse
+   Hub and set as the default playback profile, that means recorded
+   instruments performing from the notation.
+2. **FluidSynth** (`brew install fluid-synth`) with MuseScore's basic
+   soundfont, or any General MIDI soundfont named in `SOUNDFONT`.
+3. A plain synthesised track from `src/synth.mjs`, which needs nothing
+   installed.
+
+Set `MUSIC_ENGINE` to `musescore`, `fluidsynth` or `synth` to force one.
+`npm run music` writes just the track to `out/music.wav`. Nothing is licensed
+from anyone and the tempo always matches the cuts.
 
 To use another track, set `music` in the timeline to a file path relative to
 `video/` and set `bpm` to that track's tempo. You can also mute the track in

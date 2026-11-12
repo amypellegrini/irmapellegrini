@@ -1,10 +1,16 @@
 // The backing track: a short piano piece with quiet strings underneath.
+// The notes live in piece.mjs; this file gets them played, by the best
+// instrument available:
 //
-// The notes are written here as a MIDI file and played by FluidSynth through
-// a sampled soundfont (the one that ships with MuseScore), so what you hear
-// is recordings of a real piano and string section rather than synthesised
-// tones. Nothing is licensed from anyone, and the tempo always matches the
-// cuts. Without FluidSynth or a soundfont it falls back to src/synth.mjs.
+//   1. MuseScore   plays the score with Muse Sounds (recorded instruments,
+//                  performed from the notation) when they are installed and
+//                  set as the default playback profile, otherwise with its
+//                  basic soundfont
+//   2. FluidSynth  plays a MIDI version through MuseScore's basic soundfont
+//   3. synth.mjs   plain synthesised tones, needs nothing installed
+//
+// Set MUSIC_ENGINE to musescore, fluidsynth or synth to force one. Nothing
+// is licensed from anyone, and the tempo always matches the cuts.
 //
 //   node src/music.mjs [seconds] [bpm] [out.wav]
 
@@ -13,10 +19,13 @@ import { existsSync } from 'node:fs';
 import { writeFile, rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
-import { ffmpeg, run } from './ffmpeg.mjs';
+import { FFMPEG, ffmpeg, run } from './ffmpeg.mjs';
+import { musicXml } from './musicxml.mjs';
+import { BARS, ENDING, STRINGS_ENTER_AT_BAR, barCount } from './piece.mjs';
 import { composeTrack } from './synth.mjs';
 
 const FLUIDSYNTH = process.env.FLUIDSYNTH_PATH || 'fluidsynth';
+const MUSESCORE = [process.env.MUSESCORE_PATH, '/Applications/MuseScore 4.app/Contents/MacOS/mscore', '/Applications/MuseScore Studio.app/Contents/MacOS/mscore'].filter(Boolean);
 const SOUNDFONTS = [
   process.env.SOUNDFONT,
   '/Applications/MuseScore 4.app/Contents/Resources/sound/MS Basic.sf3',
@@ -24,29 +33,6 @@ const SOUNDFONTS = [
   '/usr/share/sounds/sf3/MuseScore_General.sf3',
   '/usr/share/sounds/sf2/FluidR3_GM.sf2',
 ].filter(Boolean);
-
-// --- the piece -----------------------------------------------------------
-// D major, four beats to the bar. `left` is the broken chord the left hand
-// plays in quavers, `strings` the held chord, `melody` is [beat, note, beats].
-const D = { left: [38, 45, 50, 54, 57, 54, 50, 45], strings: [50, 57, 62, 66] };
-const A = { left: [37, 45, 52, 57, 61, 57, 52, 45], strings: [49, 57, 61, 64] };
-const Bm = { left: [35, 42, 47, 50, 54, 50, 47, 42], strings: [47, 54, 59, 62] };
-const G = { left: [31, 38, 43, 47, 50, 47, 43, 38], strings: [43, 50, 59, 62] };
-
-const BARS = [
-  { ...D, melody: [[2, 66, 2]] },
-  { ...A, melody: [[0, 64, 4]] },
-  { ...Bm, melody: [[0, 62, 2], [2, 66, 2]] },
-  { ...G, melody: [[0, 67, 3], [3, 66, 1]] },
-  { ...D, melody: [[0, 69, 2], [2, 66, 1], [3, 64, 1]] },
-  { ...A, melody: [[0, 64, 2], [2, 69, 2]] },
-  { ...Bm, melody: [[0, 71, 2], [2, 69, 1], [3, 66, 1]] },
-  { ...G, melody: [[0, 67, 2], [2, 71, 2]] },
-  { ...Bm, melody: [[0, 74, 2], [2, 71, 1], [3, 69, 1]] },
-  { ...G, melody: [[0, 67, 2], [2, 64, 2]] },
-];
-// The last bar always lands on a held D major chord.
-const ENDING = { left: [38, 45, 50], strings: [50, 57, 62, 66], chord: [57, 62, 66] };
 
 // Small seeded generator: the same slightly uneven "performance" every time.
 function rng(seed) {
@@ -66,7 +52,7 @@ const STRINGS = 1;
 
 function arrange(seconds, bpm) {
   const random = rng(1987);
-  const bars = Math.max(2, Math.ceil((seconds * bpm) / 60 / 4));
+  const bars = barCount(seconds, bpm);
   const events = []; // { tick, bytes }
   const at = (beat) => Math.max(0, Math.round(beat * TICKS));
   const note = (channel, beat, pitch, beats, velocity) => {
@@ -108,11 +94,11 @@ function arrange(seconds, bpm) {
       for (const [beat, pitch, beats] of bar.melody) note(PIANO, start + beat, pitch, beats, 66 * shape);
     }
 
-    // Strings come in under the third bar and hold each chord into the next.
-    if (b >= 2) for (const pitch of bar.strings) note(STRINGS, start, pitch, last ? 8 : 4.15, 44);
-    if (b >= 2) {
+    // Strings hold each chord into the next.
+    if (b >= STRINGS_ENTER_AT_BAR) for (const pitch of bar.strings) note(STRINGS, start, pitch, last ? 8 : 4.15, 44);
+    if (b >= STRINGS_ENTER_AT_BAR) {
       for (let step = 0; step < 4; step++) {
-        const swell = 70 + 40 * Math.sin((Math.PI * (b - 2 + step / 4)) / Math.max(1, bars - 2));
+        const swell = 70 + 40 * Math.sin((Math.PI * (b - STRINGS_ENTER_AT_BAR + step / 4)) / Math.max(1, bars - STRINGS_ENTER_AT_BAR));
         control(STRINGS, start + step, 11, Math.round(swell));
       }
     }
@@ -156,22 +142,36 @@ function midiFile(events, bpm) {
   return Buffer.concat([header, Buffer.from(body)]);
 }
 
-function findSampler() {
-  const soundfont = SOUNDFONTS.find((file) => existsSync(file));
-  const probe = spawnSync(FLUIDSYNTH, ['--version'], { encoding: 'utf8' });
-  if (probe.error || !soundfont) return null;
-  return { soundfont };
+// Trims to length, takes a little brightness off and sets a steady level.
+// Sampled instruments can start a moment late, so anything before the first
+// sound is cut to keep the first note on the first frame.
+async function finish(raw, out, seconds) {
+  const probe = spawnSync(FFMPEG, ['-hide_banner', '-i', raw, '-af', 'silencedetect=noise=-55dB:d=0.01', '-f', 'null', '-'], { encoding: 'utf8' });
+  const lead = /silence_start: 0(?:\.0+)?\b[\s\S]*?silence_end: ([\d.]+)/.exec(probe.stderr || '');
+  const start = lead ? Math.max(0, Number(lead[1]) - 0.01) : 0;
+  await ffmpeg([
+    '-i', raw,
+    '-af', `atrim=start=${start.toFixed(3)},asetpts=PTS-STARTPTS,atrim=0:${seconds.toFixed(3)},highpass=f=35,lowpass=f=9000,loudnorm=I=-17:TP=-1.5:LRA=11,aresample=48000`,
+    '-c:a', 'pcm_s16le', out,
+  ]);
+  await rm(raw, { force: true });
 }
 
-// Writes the track to `out` (a .wav) and returns a line describing how it
-// was made.
-export async function writeMusic(out, seconds, bpm = 72) {
-  const sampler = findSampler();
-  if (!sampler) {
-    await writeFile(out, composeTrack(seconds, bpm));
-    return 'synthesised (install FluidSynth and MuseScore for the sampled piano: brew install fluid-synth)';
-  }
+async function withMuseScore(out, seconds, bpm) {
+  const app = MUSESCORE.find((file) => existsSync(file));
+  if (!app) return null;
+  const score = out.replace(/\.wav$/, '.musicxml');
+  const raw = out.replace(/\.wav$/, '.raw.wav');
+  await writeFile(score, musicXml(seconds, bpm));
+  await run(app, ['-o', raw, score]);
+  await rm(score, { force: true });
+  await finish(raw, out, seconds);
+  return 'piano and strings, played by MuseScore';
+}
 
+async function withFluidSynth(out, seconds, bpm) {
+  const soundfont = SOUNDFONTS.find((file) => existsSync(file));
+  if (!soundfont || spawnSync(FLUIDSYNTH, ['--version']).error) return null;
   const midi = out.replace(/\.wav$/, '.mid');
   const raw = out.replace(/\.wav$/, '.raw.wav');
   await writeFile(midi, midiFile(arrange(seconds, bpm), bpm));
@@ -180,17 +180,36 @@ export async function writeMusic(out, seconds, bpm = 72) {
     '-o', 'synth.reverb.active=1', '-o', 'synth.reverb.room-size=0.82', '-o', 'synth.reverb.damp=0.35',
     '-o', 'synth.reverb.width=0.9', '-o', 'synth.reverb.level=0.75',
     '-o', 'synth.chorus.active=0',
-    sampler.soundfont, midi,
+    soundfont, midi,
   ]);
-  // Trim to length, take a little brightness off and set a steady level.
-  await ffmpeg([
-    '-i', raw,
-    '-af', `atrim=0:${seconds.toFixed(3)},highpass=f=35,lowpass=f=9000,loudnorm=I=-17:TP=-1.5:LRA=11,aresample=48000`,
-    '-c:a', 'pcm_s16le', out,
-  ]);
-  await rm(raw, { force: true });
   await rm(midi, { force: true });
-  return `piano and strings, sampled from ${sampler.soundfont.split('/').pop()}`;
+  await finish(raw, out, seconds);
+  return `piano and strings, played by FluidSynth with ${soundfont.split('/').pop()}`;
+}
+
+async function withSynth(out, seconds, bpm) {
+  await writeFile(out, composeTrack(seconds, bpm));
+  return 'synthesised tones (install MuseScore or FluidSynth for recorded instruments)';
+}
+
+const ENGINES = { musescore: withMuseScore, fluidsynth: withFluidSynth, synth: withSynth };
+
+// Writes the track to `out` (a .wav) and returns a line describing how it
+// was made.
+export async function writeMusic(out, seconds, bpm = 72) {
+  const forced = process.env.MUSIC_ENGINE;
+  if (forced && !ENGINES[forced]) throw new Error(`MUSIC_ENGINE must be one of ${Object.keys(ENGINES).join(', ')}`);
+  for (const [name, engine] of Object.entries(ENGINES)) {
+    if (forced && forced !== name) continue;
+    try {
+      const made = await engine(out, seconds, bpm);
+      if (made) return made;
+    } catch (error) {
+      if (forced) throw error;
+      console.warn(`  ${name} failed (${error.message.split('\n')[0]}), trying the next option`);
+    }
+  }
+  throw new Error(`Music engine "${forced}" is not available on this machine`);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
