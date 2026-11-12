@@ -1,16 +1,54 @@
-// A calm backing track, synthesised from scratch so there is nothing to
-// license: a soft pad, a felt-piano arpeggio and a few high notes over
-// D - A/C# - Bm7 - Gmaj7, with a simple reverb. Same input, same output.
+// The backing track: a short piano piece with quiet strings underneath.
+//
+// The notes are written here as a MIDI file and played by FluidSynth through
+// a sampled soundfont (the one that ships with MuseScore), so what you hear
+// is recordings of a real piano and string section rather than synthesised
+// tones. Nothing is licensed from anyone, and the tempo always matches the
+// cuts. Without FluidSynth or a soundfont it falls back to src/synth.mjs.
 //
 //   node src/music.mjs [seconds] [bpm] [out.wav]
 
-import { writeFile } from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { writeFile, rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
-const RATE = 44100;
-const hz = (midi) => 440 * 2 ** ((midi - 69) / 12);
+import { ffmpeg, run } from './ffmpeg.mjs';
+import { composeTrack } from './synth.mjs';
 
-// Small seeded generator so every render gets the same "performance".
+const FLUIDSYNTH = process.env.FLUIDSYNTH_PATH || 'fluidsynth';
+const SOUNDFONTS = [
+  process.env.SOUNDFONT,
+  '/Applications/MuseScore 4.app/Contents/Resources/sound/MS Basic.sf3',
+  '/Applications/MuseScore 3.app/Contents/Resources/sound/MuseScore_General.sf3',
+  '/usr/share/sounds/sf3/MuseScore_General.sf3',
+  '/usr/share/sounds/sf2/FluidR3_GM.sf2',
+].filter(Boolean);
+
+// --- the piece -----------------------------------------------------------
+// D major, four beats to the bar. `left` is the broken chord the left hand
+// plays in quavers, `strings` the held chord, `melody` is [beat, note, beats].
+const D = { left: [38, 45, 50, 54, 57, 54, 50, 45], strings: [50, 57, 62, 66] };
+const A = { left: [37, 45, 52, 57, 61, 57, 52, 45], strings: [49, 57, 61, 64] };
+const Bm = { left: [35, 42, 47, 50, 54, 50, 47, 42], strings: [47, 54, 59, 62] };
+const G = { left: [31, 38, 43, 47, 50, 47, 43, 38], strings: [43, 50, 59, 62] };
+
+const BARS = [
+  { ...D, melody: [[2, 66, 2]] },
+  { ...A, melody: [[0, 64, 4]] },
+  { ...Bm, melody: [[0, 62, 2], [2, 66, 2]] },
+  { ...G, melody: [[0, 67, 3], [3, 66, 1]] },
+  { ...D, melody: [[0, 69, 2], [2, 66, 1], [3, 64, 1]] },
+  { ...A, melody: [[0, 64, 2], [2, 69, 2]] },
+  { ...Bm, melody: [[0, 71, 2], [2, 69, 1], [3, 66, 1]] },
+  { ...G, melody: [[0, 67, 2], [2, 71, 2]] },
+  { ...Bm, melody: [[0, 74, 2], [2, 71, 1], [3, 69, 1]] },
+  { ...G, melody: [[0, 67, 2], [2, 64, 2]] },
+];
+// The last bar always lands on a held D major chord.
+const ENDING = { left: [38, 45, 50], strings: [50, 57, 62, 66], chord: [57, 62, 66] };
+
+// Small seeded generator: the same slightly uneven "performance" every time.
 function rng(seed) {
   let s = seed >>> 0;
   return () => {
@@ -22,150 +60,142 @@ function rng(seed) {
   };
 }
 
-const CHORDS = [
-  { bass: 38, pad: [50, 57, 62, 66], arp: [62, 66, 69, 74, 76] }, // D add9
-  { bass: 37, pad: [49, 57, 61, 64], arp: [61, 64, 69, 73, 76] }, // A / C#
-  { bass: 35, pad: [47, 54, 57, 62], arp: [59, 62, 66, 69, 74] }, // Bm7
-  { bass: 31, pad: [43, 50, 54, 59], arp: [59, 62, 66, 71, 74] }, // Gmaj7
-];
-const ARP_PATTERN = [0, 2, 1, 3, 2, 4, 3, 1];
-const MELODY = [78, 76, 74, 81, 78, 76, 74, 69]; // one note per bar, D major
+const TICKS = 480; // per beat
+const PIANO = 0;
+const STRINGS = 1;
 
-function addPiano(L, R, start, midi, velocity, pan) {
-  const f = hz(midi);
-  const length = Math.floor(RATE * 3.2);
-  const i0 = Math.floor(start * RATE);
-  const gl = Math.cos((pan * Math.PI) / 2);
-  const gr = Math.sin((pan * Math.PI) / 2);
-  for (let i = 0; i < length && i0 + i < L.length; i++) {
-    const t = i / RATE;
-    const attack = Math.min(1, t / 0.006);
-    let v = 0;
-    for (let n = 1; n <= 6; n++) {
-      const fn = f * n * (1 + 0.0004 * n * n);
-      if (fn > 9000) break;
-      v += (Math.sin(2 * Math.PI * fn * t) / n ** 1.7) * Math.exp(-t * (1.1 + 0.9 * n));
-    }
-    v *= attack * velocity;
-    L[i0 + i] += v * gl;
-    R[i0 + i] += v * gr;
-  }
-}
-
-function addPad(L, R, start, seconds, midi, level) {
-  const f = hz(midi);
-  const attack = 1.4;
-  const release = 2.2;
-  const length = Math.floor(RATE * (seconds + release));
-  const i0 = Math.floor(start * RATE);
-  for (let i = 0; i < length && i0 + i < L.length; i++) {
-    if (i0 + i < 0) continue;
-    const t = i / RATE;
-    const env = t < seconds ? Math.min(1, t / attack) : Math.max(0, 1 - (t - seconds) / release);
-    const shaped = env * env * (3 - 2 * env);
-    const a = Math.sin(2 * Math.PI * f * 0.9985 * t) + 0.18 * Math.sin(2 * Math.PI * f * 2 * t);
-    const b = Math.sin(2 * Math.PI * f * 1.0015 * t) + 0.18 * Math.sin(2 * Math.PI * f * 2.003 * t);
-    L[i0 + i] += a * shaped * level;
-    R[i0 + i] += b * shaped * level;
-  }
-}
-
-// Schroeder reverb: four comb filters into two all-pass filters.
-function reverb(x, offset) {
-  const out = new Float32Array(x.length);
-  for (const [ms, feedback] of [[29.7, 0.86], [37.1, 0.84], [41.1, 0.83], [43.7, 0.82]]) {
-    const d = Math.floor(((ms + offset) / 1000) * RATE);
-    const buf = new Float32Array(d);
-    let lp = 0;
-    for (let i = 0, p = 0; i < x.length; i++, p = (p + 1) % d) {
-      const y = buf[p];
-      lp = y * 0.6 + lp * 0.4; // damp the tail
-      buf[p] = x[i] + lp * feedback;
-      out[i] += y * 0.25;
-    }
-  }
-  for (const ms of [5, 1.7]) {
-    const d = Math.floor((ms / 1000) * RATE);
-    const buf = new Float32Array(d);
-    for (let i = 0, p = 0; i < out.length; i++, p = (p + 1) % d) {
-      const b = buf[p];
-      const y = -0.7 * out[i] + b;
-      buf[p] = out[i] + 0.7 * y;
-      out[i] = y;
-    }
-  }
-  return out;
-}
-
-export function composeTrack(seconds, bpm = 72) {
-  const total = Math.ceil(seconds * RATE);
-  const L = new Float32Array(total);
-  const R = new Float32Array(total);
-  const beat = 60 / bpm;
-  const bar = beat * 4;
-  const bars = Math.ceil(seconds / bar);
+function arrange(seconds, bpm) {
   const random = rng(1987);
+  const bars = Math.max(2, Math.ceil((seconds * bpm) / 60 / 4));
+  const events = []; // { tick, bytes }
+  const at = (beat) => Math.max(0, Math.round(beat * TICKS));
+  const note = (channel, beat, pitch, beats, velocity) => {
+    // Nobody plays exactly on the grid or at an even weight.
+    const start = channel === PIANO ? beat + (random() - 0.5) * 0.02 : beat;
+    const v = Math.max(1, Math.min(127, Math.round(velocity * (0.9 + random() * 0.2))));
+    events.push({ tick: at(start), bytes: [0x90 | channel, pitch, v] });
+    events.push({ tick: at(start + beats) - 1, bytes: [0x80 | channel, pitch, 0] });
+  };
+  const control = (channel, beat, number, value) => events.push({ tick: at(beat), bytes: [0xb0 | channel, number, value] });
+
+  events.push({ tick: 0, bytes: [0xc0 | PIANO, 0] }); // grand piano
+  events.push({ tick: 0, bytes: [0xc0 | STRINGS, 48] }); // string ensemble
+  control(PIANO, 0, 7, 105);
+  control(PIANO, 0, 91, 70); // reverb send
+  control(STRINGS, 0, 7, 62);
+  control(STRINGS, 0, 91, 95);
 
   for (let b = 0; b < bars; b++) {
+    const start = b * 4;
     const last = b === bars - 1;
-    const chord = last ? CHORDS[0] : CHORDS[b % 4];
-    const t0 = b * bar;
+    const bar = last ? ENDING : BARS[b % BARS.length];
+    // The piece builds a little towards the middle and settles again.
+    const shape = 0.85 + 0.25 * Math.sin((Math.PI * b) / (bars - 1));
 
-    for (const note of chord.pad) addPad(L, R, t0 - 0.3, bar, note, 0.035);
-    addPad(L, R, t0 - 0.2, bar, chord.bass, 0.11);
+    // Sustain pedal: lifted and pressed again at each change of chord.
+    control(PIANO, start + 0.06, 64, 127);
+    if (!last) control(PIANO, start + 3.97, 64, 0);
 
-    // Arpeggio in quavers; it thins out for the first bar and the ending.
-    for (let step = 0; step < 8; step++) {
-      if (b === 0 && step % 2 === 1) continue;
-      if (last && step > 4) continue;
-      if (random() < 0.12) continue;
-      const note = chord.arp[ARP_PATTERN[step]];
-      const time = t0 + (step * beat) / 2 + (random() - 0.5) * 0.012;
-      const accent = step % 4 === 0 ? 1 : 0.72;
-      addPiano(L, R, time, note, 0.2 * accent * (0.85 + random() * 0.3), 0.35 + random() * 0.3);
+    if (last) {
+      bar.left.forEach((pitch, i) => note(PIANO, start + i * 0.5, pitch, 8, 46 - i * 3));
+      bar.chord.forEach((pitch, i) => note(PIANO, start + 1.5 + i * 0.04, pitch, 8, 50));
+    } else {
+      bar.left.forEach((pitch, i) => {
+        if (b === 0 && i % 2 === 1 && i > 2) return; // a sparse first bar
+        const weight = i === 0 ? 56 : i % 2 === 0 ? 46 : 40;
+        note(PIANO, start + i * 0.5, pitch, 0.5, weight * shape);
+      });
+      for (const [beat, pitch, beats] of bar.melody) note(PIANO, start + beat, pitch, beats, 66 * shape);
     }
 
-    if (b > 0) addPiano(L, R, t0 + beat * (b % 2 ? 2 : 0), MELODY[b % MELODY.length], 0.16, b % 2 ? 0.3 : 0.7);
+    // Strings come in under the third bar and hold each chord into the next.
+    if (b >= 2) for (const pitch of bar.strings) note(STRINGS, start, pitch, last ? 8 : 4.15, 44);
+    if (b >= 2) {
+      for (let step = 0; step < 4; step++) {
+        const swell = 70 + 40 * Math.sin((Math.PI * (b - 2 + step / 4)) / Math.max(1, bars - 2));
+        control(STRINGS, start + step, 11, Math.round(swell));
+      }
+    }
   }
 
-  const wetL = reverb(L, 0);
-  const wetR = reverb(R, 1.3);
-  let peak = 0;
-  for (let i = 0; i < total; i++) {
-    const t = i / RATE;
-    const fade = Math.min(1, t / 0.4) * Math.min(1, Math.max(0, (seconds - t) / 3));
-    L[i] = (L[i] * 0.75 + wetL[i] * 0.55) * fade;
-    R[i] = (R[i] * 0.75 + wetR[i] * 0.55) * fade;
-    peak = Math.max(peak, Math.abs(L[i]), Math.abs(R[i]));
-  }
-  const gain = 0.7 / (peak || 1);
+  // A silent event after the last note so the reverb tail is rendered.
+  control(PIANO, bars * 4 + 8, 7, 105);
+  return events;
+}
 
-  const header = Buffer.alloc(44);
-  const bytes = total * 4;
-  header.write('RIFF', 0);
-  header.writeUInt32LE(36 + bytes, 4);
-  header.write('WAVEfmt ', 8);
-  header.writeUInt32LE(16, 16);
-  header.writeUInt16LE(1, 20);
-  header.writeUInt16LE(2, 22);
-  header.writeUInt32LE(RATE, 24);
-  header.writeUInt32LE(RATE * 4, 28);
-  header.writeUInt16LE(4, 32);
-  header.writeUInt16LE(16, 34);
-  header.write('data', 36);
-  header.writeUInt32LE(bytes, 40);
-  const pcm = Buffer.alloc(bytes);
-  for (let i = 0; i < total; i++) {
-    pcm.writeInt16LE(Math.round(Math.max(-1, Math.min(1, L[i] * gain)) * 32767), i * 4);
-    pcm.writeInt16LE(Math.round(Math.max(-1, Math.min(1, R[i] * gain)) * 32767), i * 4 + 2);
+function varLength(value) {
+  const bytes = [value & 0x7f];
+  while ((value >>= 7) > 0) bytes.unshift((value & 0x7f) | 0x80);
+  return bytes;
+}
+
+function midiFile(events, bpm) {
+  const usPerBeat = Math.round(60000000 / bpm);
+  const tempo = { tick: 0, bytes: [0xff, 0x51, 0x03, (usPerBeat >> 16) & 0xff, (usPerBeat >> 8) & 0xff, usPerBeat & 0xff] };
+  // Stable sort: at the same tick, note-offs come before note-ons.
+  const ordered = [tempo, ...events]
+    .map((e, i) => ({ ...e, i }))
+    .sort((a, b) => a.tick - b.tick || ((a.bytes[0] & 0xf0) === 0x80 ? -1 : 0) - ((b.bytes[0] & 0xf0) === 0x80 ? -1 : 0) || a.i - b.i);
+
+  const body = [];
+  let previous = 0;
+  for (const e of ordered) {
+    body.push(...varLength(e.tick - previous), ...e.bytes);
+    previous = e.tick;
   }
-  return Buffer.concat([header, pcm]);
+  body.push(0, 0xff, 0x2f, 0x00);
+
+  const header = Buffer.alloc(22);
+  header.write('MThd', 0);
+  header.writeUInt32BE(6, 4);
+  header.writeUInt16BE(0, 8); // format 0: one track
+  header.writeUInt16BE(1, 10);
+  header.writeUInt16BE(TICKS, 12);
+  header.write('MTrk', 14);
+  header.writeUInt32BE(body.length, 18);
+  return Buffer.concat([header, Buffer.from(body)]);
+}
+
+function findSampler() {
+  const soundfont = SOUNDFONTS.find((file) => existsSync(file));
+  const probe = spawnSync(FLUIDSYNTH, ['--version'], { encoding: 'utf8' });
+  if (probe.error || !soundfont) return null;
+  return { soundfont };
+}
+
+// Writes the track to `out` (a .wav) and returns a line describing how it
+// was made.
+export async function writeMusic(out, seconds, bpm = 72) {
+  const sampler = findSampler();
+  if (!sampler) {
+    await writeFile(out, composeTrack(seconds, bpm));
+    return 'synthesised (install FluidSynth and MuseScore for the sampled piano: brew install fluid-synth)';
+  }
+
+  const midi = out.replace(/\.wav$/, '.mid');
+  const raw = out.replace(/\.wav$/, '.raw.wav');
+  await writeFile(midi, midiFile(arrange(seconds, bpm), bpm));
+  await run(FLUIDSYNTH, [
+    '-ni', '-q', '-F', raw, '-r', '48000', '-g', '0.8',
+    '-o', 'synth.reverb.active=1', '-o', 'synth.reverb.room-size=0.82', '-o', 'synth.reverb.damp=0.35',
+    '-o', 'synth.reverb.width=0.9', '-o', 'synth.reverb.level=0.75',
+    '-o', 'synth.chorus.active=0',
+    sampler.soundfont, midi,
+  ]);
+  // Trim to length, take a little brightness off and set a steady level.
+  await ffmpeg([
+    '-i', raw,
+    '-af', `atrim=0:${seconds.toFixed(3)},highpass=f=35,lowpass=f=9000,loudnorm=I=-17:TP=-1.5:LRA=11,aresample=48000`,
+    '-c:a', 'pcm_s16le', out,
+  ]);
+  await rm(raw, { force: true });
+  await rm(midi, { force: true });
+  return `piano and strings, sampled from ${sampler.soundfont.split('/').pop()}`;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const seconds = Number(process.argv[2] ?? 36);
   const bpm = Number(process.argv[3] ?? 72);
   const out = process.argv[4] ?? 'out/music.wav';
-  await writeFile(out, composeTrack(seconds, bpm));
-  console.log(`Wrote ${out} (${seconds}s at ${bpm} bpm)`);
+  console.log(`Wrote ${out}: ${await writeMusic(out, seconds, bpm)}`);
 }

@@ -9,7 +9,7 @@
 
 import { createHash } from 'node:crypto';
 import { existsSync, statSync } from 'node:fs';
-import { mkdir, writeFile, rename } from 'node:fs/promises';
+import { mkdir, rename } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -17,7 +17,7 @@ import timeline from '../timeline.mjs';
 import { ffmpeg } from './ffmpeg.mjs';
 import { renderClip, renderStill } from './scenes.mjs';
 import { renderCaption } from './captions.mjs';
-import { composeTrack } from './music.mjs';
+import { writeMusic } from './music.mjs';
 
 const VIDEO_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const REPO_DIR = path.resolve(VIDEO_DIR, '..');
@@ -120,9 +120,8 @@ async function main() {
 
   let musicFile;
   if (timeline.music === 'generated') {
-    console.log('Composing music');
     musicFile = path.join(CACHE_DIR, 'music.wav');
-    await writeFile(musicFile, composeTrack(totalSeconds, timeline.bpm));
+    console.log(`Music: ${await writeMusic(musicFile, totalSeconds, timeline.bpm)}`);
   } else if (timeline.music) {
     musicFile = path.resolve(VIDEO_DIR, timeline.music);
     if (!existsSync(musicFile)) throw new Error(`Music file not found: ${musicFile}`);

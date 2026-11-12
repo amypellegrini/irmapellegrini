@@ -10,6 +10,7 @@ edit followed by a re-render.
 - Node 18 or newer
 - ffmpeg on the PATH (`brew install ffmpeg`), or point `FFMPEG_PATH` and
   `FFPROBE_PATH` at a build
+- For the sampled music: FluidSynth and MuseScore (see Music below)
 
 ## Rendering
 
@@ -52,11 +53,19 @@ that changed are rendered again.
 
 ## Music
 
-`src/music.mjs` synthesises the backing track (a soft pad and a piano
-arpeggio in D major), so there is nothing to license and the tempo always
-matches the cuts. To use another track, set `music` in the timeline to a
-file path relative to `video/` and set `bpm` to that track's tempo. You can
-also mute the track in Instagram and pick one from its library.
+`src/music.mjs` writes a short piano piece with quiet strings (D major, 72
+bpm) as MIDI and plays it through FluidSynth using the sampled soundfont that
+ships with MuseScore, so it sounds like recorded instruments. Nothing is
+licensed from anyone and the tempo always matches the cuts.
+
+It needs FluidSynth (`brew install fluid-synth`) and MuseScore installed in
+`/Applications`, or `SOUNDFONT` pointing at any General MIDI soundfont.
+Without them the render still works, using a plainer synthesised track from
+`src/synth.mjs`. `npm run music` writes just the track to `out/music.wav`.
+
+To use another track, set `music` in the timeline to a file path relative to
+`video/` and set `bpm` to that track's tempo. You can also mute the track in
+Instagram and pick one from its library.
 
 ## Layout
 

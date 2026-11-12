@@ -24,7 +24,7 @@ export default {
   fps: 30,
   bpm: 72,
 
-  // 'generated' builds the calm backing track in src/music.mjs.
+  // 'generated' builds the piano backing track in src/music.mjs.
   // Put a path here (relative to video/) to use a track of your own.
   music: 'generated',
 
