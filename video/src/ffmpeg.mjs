@@ -20,6 +20,20 @@ export function run(bin, args) {
   });
 }
 
+// Runs ffmpeg with a pipe on stdin and hands the pipe to `feed`, which writes
+// raw frames into it.
+export function ffmpegWithInput(args, feed) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-y', ...args], { stdio: ['pipe', 'ignore', 'pipe'] });
+    let err = '';
+    child.stderr.on('data', (d) => (err += d));
+    child.stdin.on('error', () => {}); // ffmpeg's own exit code reports the failure
+    child.on('error', reject);
+    child.on('close', (code) => (code === 0 ? resolve() : reject(new Error(`ffmpeg exited with ${code}\n${err.split('\n').slice(-12).join('\n')}`))));
+    feed(child.stdin).then(() => child.stdin.end(), (e) => { child.kill(); reject(e); });
+  });
+}
+
 export const ffmpeg = (args) => run(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-y', ...args]);
 
 export async function probe(file) {

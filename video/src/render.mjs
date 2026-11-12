@@ -23,7 +23,7 @@ const VIDEO_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..
 const REPO_DIR = path.resolve(VIDEO_DIR, '..');
 const CACHE_DIR = path.join(VIDEO_DIR, '.cache');
 const OUT_DIR = path.join(VIDEO_DIR, 'out');
-const CACHE_VERSION = 5;
+const CACHE_VERSION = 7;
 
 const args = new Set(process.argv.slice(2));
 const preview = args.has('--preview');

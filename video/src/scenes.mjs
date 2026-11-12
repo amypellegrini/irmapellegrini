@@ -1,7 +1,11 @@
 // Turns one timeline scene into an intermediate video file of an exact
 // number of frames. Each scene is rendered on its own so it can be cached.
 
-import { ffmpeg, probe, hasFilter } from './ffmpeg.mjs';
+import { once } from 'node:events';
+import { rm } from 'node:fs/promises';
+import { createCanvas, loadImage } from '@napi-rs/canvas';
+
+import { ffmpeg, ffmpegWithInput, probe, hasFilter } from './ffmpeg.mjs';
 
 const even = (n) => Math.round(n / 2) * 2;
 const n4 = (n) => Number(n.toFixed(4));
@@ -92,10 +96,15 @@ export async function renderClip(scene, ctx, file, frames, out) {
 // --- still images --------------------------------------------------------
 
 // Slow zoom: the picture is fitted inside the frame over a blurred copy of
-// itself, then the whole card is zoomed. Rendering at `ss` times the output
-// size keeps the movement smooth instead of stepping pixel by pixel.
+// itself, and that card is zoomed.
+//
+// ffmpeg's zoompan snaps the crop to whole pixels each frame, which shows as
+// a shake on a slow zoom. So ffmpeg only builds the card, once, at twice the
+// output size; each frame is then drawn on a canvas with a fractional scale
+// and offset, and the frames are piped back to ffmpeg for encoding.
 async function renderZoom(scene, ctx, file, frames, out) {
-  const { W, H, fps, ss, k: unit } = ctx;
+  const { W, H, fps, k: unit } = ctx;
+  const ss = ctx.preview ? 1 : 2;
   const info = await probe(file);
   const maxW = W - 2 * (scene.margin ?? 0) * unit;
   const maxH = (scene.maxHeight ?? 1240) * unit;
@@ -106,23 +115,40 @@ async function renderZoom(scene, ctx, file, frames, out) {
   const fgX = Math.round((W * ss - fgW) / 2);
   const fgY = Math.round(centreY * ss - fgH / 2);
 
-  const amount = scene.amount ?? 0.1;
-  const [z0, z1] = scene.move === 'out' ? [1 + amount, 1] : [1, 1 + amount];
-  const fx = scene.focusX ?? 0.5;
-  const fy = scene.focusY ?? centreY / H;
-  const p = `(on/${Math.max(1, frames - 1)})`;
-
+  const card = out.replace(/\.mp4$/, '.card.png');
   const graph = [
     `[0:v]format=rgb24,split[a][b]`,
-    `[a]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},gblur=sigma=45,` +
+    `[a]scale=${W}:${H}:force_original_aspect_ratio=increase,crop=${W}:${H},gblur=sigma=${Math.round(45 * unit)},` +
       `eq=brightness=-0.05:saturation=0.9,scale=${W * ss}:${H * ss}:flags=bilinear[bg]`,
     `[b]scale=${fgW}:${fgH}:flags=lanczos[fg]`,
-    `[bg][fg]overlay=${fgX}:${fgY},` +
-      `zoompan=z='${z0}+(${n4(z1 - z0)})*${p}':x='(iw-iw/zoom)*${fx}':y='(ih-ih/zoom)*${n4(fy)}':` +
-      `d=${frames}:s=${W}x${H}:fps=${fps},format=yuv420p[v]`,
+    `[bg][fg]overlay=${fgX}:${fgY},format=rgb24[v]`,
   ].join(';');
+  await ffmpeg(['-i', file, '-filter_complex', graph, '-map', '[v]', '-frames:v', '1', '-update', '1', card]);
 
-  await ffmpeg(['-i', file, '-filter_complex', graph, '-map', '[v]', ...encodeArgs(ctx, frames, out)]);
+  const amount = scene.amount ?? 0.1;
+  const [z0, z1] = scene.move === 'out' ? [1 + amount, 1] : [1, 1 + amount];
+  // The point that stays still while everything else grows around it.
+  const fx = (scene.focusX ?? 0.5) * W;
+  const fy = scene.focusY != null ? scene.focusY * H : centreY;
+
+  const image = await loadImage(card);
+  const canvas = createCanvas(W, H);
+  const draw = canvas.getContext('2d');
+  draw.imageSmoothingEnabled = true;
+  draw.imageSmoothingQuality = 'high';
+
+  await ffmpegWithInput(
+    ['-f', 'rawvideo', '-pix_fmt', 'rgba', '-s', `${W}x${H}`, '-r', String(fps), '-i', 'pipe:0', '-vf', 'format=yuv420p', ...encodeArgs(ctx, frames, out)],
+    async (stdin) => {
+      for (let i = 0; i < frames; i++) {
+        const z = z0 + ((z1 - z0) * i) / Math.max(1, frames - 1);
+        draw.setTransform(z, 0, 0, z, fx * (1 - z), fy * (1 - z));
+        draw.drawImage(image, 0, 0, W, H);
+        if (!stdin.write(Buffer.from(canvas.data()))) await once(stdin, 'drain');
+      }
+    },
+  );
+  await rm(card, { force: true });
 }
 
 // Pan: the picture is scaled to a set height (the full frame by default) and
